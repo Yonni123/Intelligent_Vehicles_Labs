@@ -14,8 +14,8 @@ ylabel('Latitude');
 % from NMEA-0183 into meters
 % 1. longitude and latitude angles from NMEA-0183 into degrees  
 
-LongDeg = 0;% = floor(Longitude/100) + (Longitude - floor(Longitude/100)*100)/60;
-LatDeg = 0; % 
+LongDeg = floor(Longitude/100) + (Longitude - floor(Longitude/100)*100)/60;
+LatDeg = floor(Latitude/100) + (Latitude - floor(Latitude/100)*100)/60;
 
 figure, plot(LongDeg,LatDeg);
 title('Position in degrees');
@@ -23,8 +23,8 @@ xlabel('Longitude');
 ylabel('Latitude');
 
 % 2. longitude and latitude angles from NMEA-0183 into degrees
-F_lon = 0; % from table
-F_lat = 0; % from table
+F_lon = 62393; % from table
+F_lat = 111342; % from table
 
 X = F_lon * LongDeg;
 Y = F_lat * LatDeg;
