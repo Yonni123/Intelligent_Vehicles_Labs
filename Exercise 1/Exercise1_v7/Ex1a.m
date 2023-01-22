@@ -37,6 +37,19 @@ ylabel('Latitude');
 % 3.2 Estimate the mean and variance of the position (in x and y)
 % Matlab fuctions mean() and var()
 % -> Your code here
+X_error = X - mean(X)
+Y_error = Y - mean(Y)
+figure, plot(X_error,Y_error);
+title('Error');
+xlabel('Longitude');
+ylabel('Latitude');
+
+C = cov([X, Y])
+title('IDK');
+xlabel('Longitude');
+ylabel('Latitude');
+plot_uncertainty([0 0]', C, 1, 2)
+
 
 % 3.3 Plot, with respect to time, the errors and the auto-correlation 
 % in x and y separately.
