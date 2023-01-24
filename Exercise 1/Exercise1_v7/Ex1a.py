@@ -79,7 +79,7 @@ def plot_uncertainty(x_error, y_error, Title='Uncertainty'):
     # Plotting the ellipse
     angle = np.degrees(np.arctan2(*eigenvectors[:, 0][::-1]))
     width, height = 2 * np.sqrt(eigenvalues)
-    ell = Ellipse(xy=mean, width=width, height=height, angle=angle, color='red', zorder=2)
+    ell = Ellipse(xy=mean, width=width, height=height, angle=angle, color='red', lw=2, zorder=2)
     ell.set_facecolor('none')
     plt.gca().add_artist(ell)
 
@@ -89,6 +89,22 @@ def plot_uncertainty(x_error, y_error, Title='Uncertainty'):
     plt.ylabel('Latitude')
     plt.title(Title)
 
+    # Scatter plot the first 10 of the data points and mark them as .
+    plt.scatter(data[:10, 0], data[:10, 1], marker='.', color='red', zorder=3)
+    plt.scatter(data[101:110, 0], data[101:110, 1], marker='.', color='red', zorder=3)
+
+    # Find the max point and mark it as non-filled circle
+    max_point = np.argmax(np.sqrt(np.power(data[:, 0], 2) + np.power(data[:, 1], 2)))
+    plt.scatter(data[max_point, 0], data[max_point, 1], marker='o', facecolors='none', edgecolors='red', zorder=4)
+
+    # Generate 10 random points with the same variance as X and Y and plot them as x
+    random_points = np.random.multivariate_normal(mean, cov_matrix, 10)
+    plt.scatter(random_points[:, 0], random_points[:, 1], marker='x', color='red', zorder=5)
+
+    # Print the value of the max point
+    print('Max point: ', data[max_point, :])
+    print('value:' , np.sqrt(np.power(data[max_point, 0], 2) + np.power(data[max_point, 1], 2)))
+
     plt.show()
 
 # Calculate the covariance matrix
@@ -96,5 +112,34 @@ cov = np.cov(x_error, y_error)
 print('Covariance matrix:\n', cov)
 plot_uncertainty(x_error, y_error, 'Uncertainty')
 
+# Plot histograms of the x and y errors
+plt.hist(x_error, bins=30, edgecolor='black')
+plt.title('Histogram of x error')
+plt.xlabel('x error')
+plt.ylabel('Frequency')
+plt.show()
+
+plt.hist(y_error, bins=30, edgecolor='black')
+plt.title('Histogram of y error')
+plt.xlabel('y error')
+plt.ylabel('Frequency')
+plt.show()
+
 # 3.3 Plot, with respect to time, the errors and the auto-correlation in x and y separately.
 # -> Your code here
+
+# Plot the errors in x and y with respect to time
+# X and Y in separate sub-plots
+Time = np.arange(0, len(x_error), 1)
+plt.subplot(2, 1, 1)
+plt.plot(Time, x_error)
+plt.title('X and Y error with respect to time')
+plt.xlabel('')
+plt.ylabel('X error')
+
+plt.subplot(2, 1, 2)
+plt.plot(Time, y_error)
+plt.title('')
+plt.xlabel('Time')
+plt.ylabel('Y error')
+plt.show()
