@@ -2,6 +2,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Ellipse
+from scipy.stats import norm
 
 
 # This is just a function to plot the data the same way MATLAB does
@@ -113,16 +114,41 @@ print('Covariance matrix:\n', cov)
 plot_uncertainty(x_error, y_error, 'Uncertainty')
 
 # Plot histograms of the x and y errors
-plt.hist(x_error, bins=30, edgecolor='black')
+# Plot a normal distribution with the same mean and variance as the x and y errors
+#plt.hist(x_error, bins=30, edgecolor='black')
 plt.title('Histogram of x error')
 plt.xlabel('x error')
 plt.ylabel('Frequency')
+
+# Plot the histogram.
+(n, _, _) = plt.hist(x_error, bins=25, edgecolor='black')
+binmax = np.max(n)
+
+# Plot the PDF.
+mu, std = np.mean(x_error), np.std(x_error)
+xmin, xmax = plt.xlim()
+x = np.linspace(xmin, xmax, 100)
+p = norm.pdf(x, mu, std)
+multiplier = binmax / np.max(p)
+plt.plot(x, multiplier*p, 'k', linewidth=2)
 plt.show()
 
-plt.hist(y_error, bins=30, edgecolor='black')
+# Plot histograms of the x and y errors
 plt.title('Histogram of y error')
 plt.xlabel('y error')
 plt.ylabel('Frequency')
+
+# Plot the histogram.
+(n, _, _) = plt.hist(y_error, bins=25, edgecolor='black')
+binmax = np.max(n)
+
+# Plot the PDF.
+mu, std = np.mean(x_error), np.std(x_error)
+xmin, xmax = plt.xlim()
+x = np.linspace(xmin, xmax, 100)
+p = norm.pdf(x, mu, std)
+multiplier = binmax / np.max(p)
+plt.plot(x, multiplier*p, 'k', linewidth=2)
 plt.show()
 
 # 3.3 Plot, with respect to time, the errors and the auto-correlation in x and y separately.
@@ -142,4 +168,42 @@ plt.plot(Time, y_error)
 plt.title('')
 plt.xlabel('Time')
 plt.ylabel('Y error')
+plt.show()
+
+# Calculate the auto-correlation in x and y
+# Plot the auto-correlation in x and y with respect to time
+
+# Generate a random signal as long as the x and y error
+x_rand = np.random.normal(0, 1, len(x_error))
+y_rand = np.random.normal(0, 1, len(y_error))
+
+# Calculate the auto-correlation in x and y
+x_auto_corr = np.correlate(x_error, x_error, mode='full')
+y_auto_corr = np.correlate(y_error, y_error, mode='full')
+x_rand_auto_corr = np.correlate(x_rand, x_rand, mode='full')
+y_rand_auto_corr = np.correlate(y_rand, y_rand, mode='full')
+
+# Normalize the auto-correlation
+x_auto_corr = x_auto_corr / np.max(x_auto_corr)
+y_auto_corr = y_auto_corr / np.max(y_auto_corr)
+x_rand_auto_corr = x_rand_auto_corr / np.max(x_rand_auto_corr)
+y_rand_auto_corr = y_rand_auto_corr / np.max(y_rand_auto_corr)
+
+# Plot the auto-correlation in x and y with respect to same time as previous plot
+Time = np.arange(-len(x_error) + 1, len(x_error), 1)
+plt.subplot(2, 1, 1)
+plt.plot(Time, x_auto_corr, zorder=2)
+plt.plot(Time, x_rand_auto_corr, color='red', zorder=1)
+plt.title('X and Y auto-correlation with respect to time')
+plt.xlabel('')
+plt.ylabel('X auto-correlation')
+# Hide x-axis numberings on this subplot
+plt.xticks([])
+
+plt.subplot(2, 1, 2)
+plt.plot(Time, y_auto_corr, zorder=2)
+plt.plot(Time, y_rand_auto_corr, color='red', zorder=1)
+plt.title('')
+plt.xlabel('Time')
+plt.ylabel('Y auto-correlation')
 plt.show()
