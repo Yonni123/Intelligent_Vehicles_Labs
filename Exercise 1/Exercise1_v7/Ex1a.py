@@ -177,6 +177,20 @@ plt.show()
 x_rand = np.random.normal(0, 1, len(x_error))
 y_rand = np.random.normal(0, 1, len(y_error))
 
+# Plot the random signal over time
+plt.subplot(2, 1, 1)
+plt.plot(Time, x_rand, color='red')
+plt.title('Random X and Y error with respect to time')
+plt.xlabel('')
+plt.ylabel('X error')
+
+plt.subplot(2, 1, 2)
+plt.plot(Time, y_rand, color='red')
+plt.title('')
+plt.xlabel('Time')
+plt.ylabel('Y error')
+plt.show()
+
 # Calculate the auto-correlation in x and y
 x_auto_corr = np.correlate(x_error, x_error, mode='full')
 y_auto_corr = np.correlate(y_error, y_error, mode='full')
