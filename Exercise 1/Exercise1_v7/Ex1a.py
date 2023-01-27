@@ -115,41 +115,40 @@ plot_uncertainty(x_error, y_error, 'Uncertainty')
 
 # Plot histograms of the x and y errors
 # Plot a normal distribution with the same mean and variance as the x and y errors
-#plt.hist(x_error, bins=30, edgecolor='black')
-plt.title('Histogram of x error')
-plt.xlabel('x error')
-plt.ylabel('Frequency')
 
-# Plot the histogram.
-(n, _, _) = plt.hist(x_error, bins=25, edgecolor='black')
-binmax = np.max(n)
+# Generate a random signal as long as the x and y error
+x_rand = np.random.normal(0, 1, len(x_error))
+y_rand = np.random.normal(0, 1, len(y_error))
 
-# Plot the PDF.
-mu, std = np.mean(x_error), np.std(x_error)
-xmin, xmax = plt.xlim()
-x = np.linspace(xmin, xmax, 100)
-p = norm.pdf(x, mu, std)
-multiplier = binmax / np.max(p)
-plt.plot(x, multiplier*p, 'k', linewidth=2)
-plt.show()
+def generateBins(data, bins=100, title='Histogram', ylabel='y', color='blue'):
+    # Plot histograms of the x and y errors
+    plt.title(title)
+    plt.xlabel(ylabel)
+    plt.ylabel('Frequency')
 
-# Plot histograms of the x and y errors
-plt.title('Histogram of y error')
-plt.xlabel('y error')
-plt.ylabel('Frequency')
+    # Plot the histogram.
+    (n, _, _) = plt.hist(data, bins=bins, edgecolor='black', color=color)
+    binmax = np.max(n)
 
-# Plot the histogram.
-(n, _, _) = plt.hist(y_error, bins=25, edgecolor='black')
-binmax = np.max(n)
+    # Plot the PDF.
+    mu, std = np.mean(data), np.std(data)
+    xmin, xmax = plt.xlim()
+    x = np.linspace(xmin, xmax, 100)
+    p = norm.pdf(x, mu, std)
+    multiplier = binmax / np.max(p)
+    plt.plot(x, multiplier * p, 'k', linewidth=2)
+    plt.show()
+    return n
 
-# Plot the PDF.
-mu, std = np.mean(x_error), np.std(x_error)
-xmin, xmax = plt.xlim()
-x = np.linspace(xmin, xmax, 100)
-p = norm.pdf(x, mu, std)
-multiplier = binmax / np.max(p)
-plt.plot(x, multiplier*p, 'k', linewidth=2)
-plt.show()
+# Plot a normal distribution with the same mean and variance as the x and y errors
+generateBins(x_error, title='Histogram of x error', ylabel='x error', bins=30)
+generateBins(y_error, title='Histogram of y error', ylabel='y error', bins=30)
+
+generateBins(x_rand, title='Histogram of x random', ylabel='x random', color='red', bins=30)
+generateBins(y_rand, title='Histogram of y random', ylabel='y random', color='red', bins=30)
+
+
+
 
 # 3.3 Plot, with respect to time, the errors and the auto-correlation in x and y separately.
 # -> Your code here
@@ -172,10 +171,6 @@ plt.show()
 
 # Calculate the auto-correlation in x and y
 # Plot the auto-correlation in x and y with respect to time
-
-# Generate a random signal as long as the x and y error
-x_rand = np.random.normal(0, 1, len(x_error))
-y_rand = np.random.normal(0, 1, len(y_error))
 
 # Plot the random signal over time
 plt.subplot(2, 1, 1)
