@@ -81,6 +81,10 @@ LatDeg = NMEA2deg(Latitude)
 # Convert to meters and plot
 LongM, LatM = deg2m(LongDeg, LatDeg)
 ax.plot(LongM, LatM, 'b-')
+plt.xlabel('Longitude')
+plt.ylabel('Latitude')
+plt.title('The route taken by the car')
+fig.autofmt_xdate()
 plt.show()
 
 # Plot the speed data
@@ -100,10 +104,14 @@ plt.plot(kmh_speeds)
 plt.xlabel('Time (s)')
 plt.ylabel('Velocity (km/h)')
 plt.title("Speed in km/h")
+
+# Mark the maximum speed with a red circle
+max_speed = max(kmh_speeds)
+max_speed_index = kmh_speeds.index(max_speed)
+plt.plot(max_speed_index, max_speed, 'ro', fillstyle='none')
 plt.show()
 
 # Q9: Calculate the maximum speed taken by the driver.
-max_speed = max(kmh_speeds)
 print("Maximum Speed is: ", max_speed, "km/h")
 
 # Q10: Did I ever break the speed limits, i.e. 70 km/h?
@@ -117,7 +125,7 @@ for i in range(len(kmh_speeds)-1):
         above_limit_y.append(LatM[i])
 
 fig, ax = plt.subplots()
-ax.imshow(map, extent=extent)
+#ax.imshow(map, extent=extent)
 ax.plot(LongM, LatM, 'b-')
 ax.plot(above_limit_x, above_limit_y, 'ro')
 plt.show()
@@ -125,7 +133,6 @@ plt.show()
 # Q11: How come the estimate in speed is so accurate while the estimate in
 # position is not? This is very important! Recall what you find out about the
 # GPS error in the first part of the exercise.
-# TODO
 
 # Plot the headings
 # Calculate the headings (and plot them with respect to time) along the path
@@ -137,63 +144,44 @@ for i in range(len(LongM)-1):
     heading.append(
         (math.atan2(LatM[i+1] - LatM[i], LongM[i+1] - LongM[i])*180)/math.pi)
 
-plt.plot(heading)
+straight_heading = heading[240:315]
+
+# Plot the headings between Laholm and Vrang in red, and the rest in blue
+plt.plot(heading, 'b-')
+plt.plot(range(240, 315), straight_heading, 'r-')
+plt.xlabel('Time (s)')
+plt.ylabel('Heading (degrees)')
+plt.title("Heading over time")
 plt.show()
 
 # Q12: Can you calculate the error in headings? Tips! If you only consider the
 # headings along the straight-line path (along Laholmsvägen or Vrangelsleden)
 # can you then estimate the variance in the heading?
-start_laholm = 220
-end_laholm = 350
-laholm_long = LongM[start_laholm:end_laholm]
-laholm_lat = LatM[start_laholm:end_laholm]
-
-start_vrang = 370
-end_vrang = 480
-vrang_long = LongM[start_vrang:end_vrang]
-vrang_lat = LatM[start_vrang:end_vrang]
-
-
-plot_map(laholm_long, laholm_lat, "Laholmsvägen")
-plot_map(vrang_long, vrang_lat, "Vrangelsleden")
-
-x_error_l = laholm_long - np.mean(laholm_long)
-y_error_l = laholm_lat - np.mean(laholm_lat)
-
-x_error_v = vrang_long - np.mean(vrang_long)
-y_error_v = vrang_lat - np.mean(vrang_lat)
-
-print(statistics.variance(x_error_l))
-print(statistics.variance(y_error_l))
-print(statistics.variance(x_error_v))
-print(statistics.variance(y_error_v))
-
-# Plot histograms of the x and y errors
-plt.hist(x_error_l, bins=30, edgecolor='black')
-plt.title('Histogram of x error')
-plt.xlabel('x error')
-plt.ylabel('Frequency')
+plt.plot(straight_heading, 'r-')
+plt.xlabel('Time (s)')
+plt.ylabel('Heading (degrees)')
+plt.title("Heading over time, between Laholmsvägen or Vrangelsleden \n (straight-line path)")
 plt.show()
 
-plt.hist(y_error_l, bins=30, edgecolor='black')
-plt.title('Histogram of y error')
-plt.xlabel('y error')
-plt.ylabel('Frequency')
-plt.show()
+# Calculate the variance in the heading along the straight-line path
+variance = np.var(straight_heading)
+print("Variance in heading is: ", variance)
 
-# Plot histograms of the x and y errors
-plt.hist(x_error_v, bins=30, edgecolor='black')
-plt.title('Histogram of x error')
-plt.xlabel('x error')
-plt.ylabel('Frequency')
-plt.show()
+# Calculate the error in heading based on the straight-line path
+mean = np.mean(straight_heading)
+errors = straight_heading - mean
 
-plt.hist(y_error_v, bins=30, edgecolor='black')
-plt.title('Histogram of y error')
-plt.xlabel('y error')
-plt.ylabel('Frequency')
+# Plot the error in heading
+plt.plot(errors, 'r-')
+plt.xlabel('Time (s)')
+plt.ylabel('Error in heading (degrees)')
+plt.title("Error in heading over time, between Laholmsvägen or Vrangelsleden \n (straight-line path)")
 plt.show()
 
 # Mark the heading values used for calculating the heading variance in the
 # heading plot and the plot at the position plot above.
 # Tips use the data points between 240:315.
+plt.plot(LongM, LatM, 'b-')
+plt.plot(LongM[240:315], LatM[240:315], 'r-')
+plt.title("Position plot with heading variance marked")
+plt.show()
