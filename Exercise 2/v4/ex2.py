@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
-from sympy import symbols, diff
+from sympy import symbols, Matrix
 
 
 def plot_uncertainty(x_error, y_error, Title='Uncertainty'):
@@ -54,7 +54,9 @@ def plot_uncertainty(x_error, y_error, Title='Uncertainty'):
     plt.show()
 
 
-# Example usage of calculating partial derivatives with sympy
+# Example usage of calculating partial derivatives with sympy (jacobian)
 x, y, z = symbols('x y z', real=True)
-f = x**2 + y**2 + z**2
-print(diff(f, x))
+X = Matrix([x*y*z, y**2, x + z])
+Y = Matrix([x, y, z])
+
+print(X.jacobian(Y))
