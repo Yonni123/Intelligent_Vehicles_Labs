@@ -12,7 +12,7 @@ WHEEL_BASE = 53;                % [mm]
 WHEEL_DIAMETER = 15.3;          % [mm]
 PULSES_PER_REVOLUTION = 600;    %
 MM_PER_PULSE = 15.3*pi/600 ;               % [mm / pulse]
-%MM_PER_PULSE = ??; % You should write the correct one, which replaces the one above!
+MM_PER_PULSE = WHEEL_DIAMETER*pi/PULSES_PER_REVOLUTION; % You should write the correct one, which replaces the one above!
 
 
 % %%% Uncertainty settings, which are be the same for the left and right encoders
@@ -47,14 +47,14 @@ for kk=2:N,
     % Change of relative movements
     dD = 0;
     dA = 0.017;
-    %dD = ??;   % You should write the correct one, which replaces the one above!
-    %dA = ??;   % You should write the correct one, which replaces the one above!
+    dD = (dDr+dDl)/2;   % You should write the correct one, which replaces the one above!
+    dA = (dDr-dDl)/WHEEL_BASE;   % You should write the correct one, which replaces the one above!
     
     % Calculate the change in X and Y (World co-ordinates)
     dX = 1;
     dY = 1;
-    %dX = ??;   % You should write the correct one, which replaces the one above!
-    %dY = ??;   % You should write the correct one, which replaces the one above!
+    dX = dD * cos(A(kk-1)+(dA/2));   % You should write the correct one, which replaces the one above!
+    dY = dD * sin(A(kk-1)+(dA/2));   % You should write the correct one, which replaces the one above!
     
     % Predict the new state variables (World co-ordinates)
     X(kk) = X(kk-1) + dX;
