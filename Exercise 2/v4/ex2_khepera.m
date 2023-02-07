@@ -73,12 +73,12 @@ for kk=2:N,
             0   1   dD*cos(a);
             0   0       1]; % You should write the correct one, which replaces the one above!
 
-    Au =   [cos(a)  -dD/2*sin(a);
-            sin(a)  dD/2*cos(a);
+    Au =   [cos(a)  (-dD/2)*sin(a);
+            sin(a)  (dD/2)*cos(a);
                 0       1];   % You should write the correct one, which repleces the one above!
 
     Cu =   [(SIGMAr^2+SIGMAl^2)/4   0;
-                0   (SIGMAr^2+SIGMAl^2)/WHEEL_BASE];   % You should write the correct one, which replaces the one above!
+                0   (SIGMAr^2+SIGMAl^2)/WHEEL_BASE^2];   % You should write the correct one, which replaces the one above!
     
     % Use the law of error predictions, which gives the new uncertainty
     Cxya_new = Axya*Cxya_old*Axya' + Au*Cu*Au';
