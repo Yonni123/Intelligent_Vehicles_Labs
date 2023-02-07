@@ -31,9 +31,11 @@ function [X1,X2] = mahal_ellipse(C, row1, row2, r, no_points)
    
    X1(1:ms) = X1tmp(1:ms);
    X1(ms+1:2*ms) = X1tmp(ms:-1:1);
+   X1 = real(X1);
    
    X2(1:ms) = X2tmp(1,1:ms);
    X2(ms+1:2*ms) = X2tmp(2,ms:-1:1);
+   X2 = real(X2);
    
    clear X1tmp;
    clear X2tmp;
