@@ -11,6 +11,13 @@ close all;
 L = 680;               % [mm] wheelbase
 T = 0.050;             % [sec] Sampling time
 
+% %%% Uncertainty settings, which are be the same for the left and right encoders
+SIGMA_WHEEL_ENCODER = 0.5/12;   % The error in the encoder is 0.5mm / 12mm travelled
+% Use the same uncertainty in both of the wheel encoders
+SIGMAl = SIGMA_WHEEL_ENCODER;
+SIGMAr = SIGMA_WHEEL_ENCODER;
+
+
 % Load encoder values
 CONTROL = load('snowhite.txt');
 
@@ -29,16 +36,16 @@ for kk=2:N,
     a = CONTROL(kk-1,2); % Angle of the steering wheel
     
     % Change of relative movements
-    dD = 0;
-    dA = 0;
-    %dD = ??;   % You should write the correct one, which replaces the one above!
-    %dA = ??;   % You should write the correct one, which replaces the one above!
+    %dD = 0;
+    %dA = 0;
+    dD = v*cos(a)*T;   % You should write the correct one, which replaces the one above!
+    dA = (v*sin(a)*T)/L;   % You should write the correct one, which replaces the one above!
     
     % Calculate the change in X and Y (World co-ordinates)
-    dX = 1;
-    dY = 1;
-    %dX = ??;   % You should write the correct one, which replaces the one above!
-    %dY = ??;   % You should write the correct one, which replaces the one above!
+    %dX = 1;
+    %dY = 1;
+    dX = dD*cos(A(kk-1)+(dA/2));   % You should write the correct one, which replaces the one above!
+    dY = dD*sin(A(kk-1)+(dA/2));   % You should write the correct one, which replaces the one above!
     
     % Predict the new state variables (World co-ordinates)
     X(kk) = X(kk-1) + dX;
@@ -49,11 +56,16 @@ for kk=2:N,
     Cxya_old = [P(kk-1,1:3);P(kk-1,4:6);P(kk-1,7:9)];   % Uncertainty in state variables at time k-1 [3x3]    
 
     Cu =   [1 0;0 1];               % Uncertainty in the input variables [2x2]
-    Axya = [1 0 0;0 1 0;0 0 1];     % Jacobian matrix w.r.t. X, Y and A [3x3]
-    Au =   [0 0;0 0;0 0];           % Jacobian matrix w.r.t. dD and dA [3x2]
-    %Axya = ??; % You should write the correct one, which replaces the one above!
-    %Au = ??;   % You should write the correct one, which repleces the one above!
-    %Cu = ??;   % You should write the correct one, which replaces the one above!
+    %Axya = [1 0 0;0 1 0;0 0 1];     % Jacobian matrix w.r.t. X, Y and A [3x3]
+    %Au =   [0 0;0 0;0 0];           % Jacobian matrix w.r.t. dD and dA [3x2]
+    Axya = [1 0 -v*cos(a)*T*sin(A(kk-1)+(dA/2));
+            0 1 v*cos(a)*T*cos(A(kk-1)+(dA/2));
+            0 0 1];
+    Au = [-sin(A(kk-1)+(dA/2)) -(1/2)*dD*sin(A(kk-1)+(dA/2));
+          cos(A(kk-1)+(dA/2)) (1/2)*dD*cos(A(kk-1)+(dA/2));
+          0 1];
+    Cu =   [(SIGMAr^2+SIGMAl^2)/4   0;
+            0   (SIGMAr^2+SIGMAl^2)/L^2];   % You should write the correct one, which replaces the one above!
     
     % Use the law of error predictions, which gives the new uncertainty
     Cxya_new = Axya*Cxya_old*Axya' + Au*Cu*Au';
@@ -65,7 +77,7 @@ for kk=2:N,
     plot(X,Y,'b.'); hold on; % plot path
     plot(CONTROL(1:kk-1,3), CONTROL(1:kk-1,4),'k.'); % plot path
     % Plot robot drivning Dead reckoning path
-    % plot_threewheeled([X(kk);Y(kk);A(kk)], 100, 612, 2, a, 150, 50, L); 
+    plot_threewheeled([X(kk);Y(kk);A(kk)], 100, 612, 2, a, 150, 50, L); 
     % Plot robot drivning Ground Truth path
     plot_threewheeled([CONTROL(kk-1,3);CONTROL(kk-1,4);CONTROL(kk-1,5)], 100, 612, 2, a, 150, 50, L);
     drawnow();
@@ -108,3 +120,5 @@ subplot(3,1,3); hold on;
     plot((A'+sqrt(P(:,9)))*180/pi, 'b:');
     plot((A'-sqrt(P(:,9)))*180/pi, 'b:');
 hold off;
+
+
