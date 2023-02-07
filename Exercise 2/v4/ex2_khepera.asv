@@ -1,7 +1,7 @@
 %
 % Odometry with Khepera Mini Robot
 %
-% Ola Bengtsson, Björn Åstrand
+% Ola Bengtsson, BjÃ¶rn Ã…strand
 %
 
 clear all;
@@ -68,17 +68,14 @@ for kk=2:N,
     Cu =   [1 0;0 1];               % Uncertainty in the input variables [2x2]
     Axya = [1 0 0;0 1 0;0 0 1];     % Jacobian matrix w.r.t. X, Y and A [3x3]
     Au =   [0 0;0 0;0 0];           % Jacobian matrix w.r.t. dD and dA [3x2]
-
     Axya = [1   0   -dD*sin(a);
             0   1   dD*cos(a);
             0   0       1]; % You should write the correct one, which replaces the one above!
-
     Au =   [cos(a)  -dD/2*sin(a);
             sin(a)  dD/2*cos(a);
                 0       1];   % You should write the correct one, which repleces the one above!
-
-    Cu =   [(SIGMAr^2+SIGMAl^2)/4   0;
-                0   (SIGMAr^2+SIGMAl^2)/WHEEL_BASE];   % You should write the correct one, which replaces the one above!
+    Cu =   [1 0;
+        0 1];   % You should write the correct one, which replaces the one above!
     
     % Use the law of error predictions, which gives the new uncertainty
     Cxya_new = Axya*Cxya_old*Axya' + Au*Cu*Au';
