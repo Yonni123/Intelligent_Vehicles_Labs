@@ -7,6 +7,10 @@
 clear all;
 close all;
 
+% TASK SETTINGS
+CorrectionTerm = true; % weither or not to use correction term described in the wang paper
+SamplingRate = 10;   % Seldom of the sampling (1 uses all sample points, 10 uses every 10th point)
+
 % %%% Khepera settings 
 WHEEL_BASE = 53;                % [mm]
 WHEEL_DIAMETER = 15.3;          % [mm]
@@ -27,8 +31,8 @@ ENC = load('khepera_circle.txt');
 
 
 % Transform encoder values (pulses) into distance travelled by the wheels (mm)
-Dr = ENC(1:1:end,2) * MM_PER_PULSE;
-Dl = ENC(1:1:end,1) * MM_PER_PULSE;
+Dr = ENC(1:SamplingRate:end,2) * MM_PER_PULSE;
+Dl = ENC(1:SamplingRate:end,1) * MM_PER_PULSE;
 N = max(size(Dr));
 
 % Init Robot Position, i.e. (0, 0, 90*pi/180) and the Robots Uncertainty
@@ -49,6 +53,16 @@ for kk=2:N,
     dA = 0.017;
     dD = (dDr+dDl)/2;   % You should write the correct one, which replaces the one above!
     dA = (dDr-dDl)/WHEEL_BASE;   % You should write the correct one, which replaces the one above!
+
+    % Check if we should use correction term or not
+    if CorrectionTerm && dA ~= 0
+        term = sin(dA/2)/(dA/2);
+        dD = dD * term;
+    end
+
+    % Save my dD and dA to an array so they can be plotted later
+    dDa(kk-1) = dD;
+    dAa(kk-1) = dA;
     
     % Calculate the change in X and Y (World co-ordinates)
     dX = 1;
@@ -91,7 +105,7 @@ for kk=2:N,
     plot_khepera([X(kk);Y(kk);A(kk)], WHEEL_DIAMETER, WHEEL_BASE, 3);
     drawnow();
 end;
-
+CV = cov(dDa,dAa*180/pi);
 
 disp('Plotting ...');
 
@@ -128,3 +142,8 @@ subplot(3,1,3); hold on;
     plot((A'+sqrt(P(:,9)))*180/pi, 'b:');
     plot((A'-sqrt(P(:,9)))*180/pi, 'b:');
 hold off;
+
+% After the run, plot the results (X,Y,A), i.e. the estimated positions 
+figure;
+    subplot(2,1,1); plot(dDa, 'b'); title('dD');
+    subplot(2,1,2); plot(dAa*180/pi, 'b'); title('dA [deg]');
