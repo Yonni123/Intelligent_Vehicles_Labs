@@ -30,7 +30,7 @@ P(1,1:9) = [1 0 0 0 1 0 0 0 (1*pi/180)^2];
 % Run until no more values are available, i.e. speed and steering angle
 N = max(size(CONTROL)); 
 disp('Calculating ...');
-for kk=2:N,  
+for kk=2:N  
     % Read current control values
     v = CONTROL(kk-1,1); % Speed of the steering wheel
     a = CONTROL(kk-1,2); % Angle of the steering wheel
@@ -55,7 +55,7 @@ for kk=2:N,
     % Predict the new uncertainty in the state variables (Error prediction)
     Cxya_old = [P(kk-1,1:3);P(kk-1,4:6);P(kk-1,7:9)];   % Uncertainty in state variables at time k-1 [3x3]    
 
-    Cu =   [1 0;0 1];               % Uncertainty in the input variables [2x2]
+    %Cu =   [1 0;0 1];               % Uncertainty in the input variables [2x2]
     %Axya = [1 0 0;0 1 0;0 0 1];     % Jacobian matrix w.r.t. X, Y and A [3x3]
     %Au =   [0 0;0 0;0 0];           % Jacobian matrix w.r.t. dD and dA [3x2]
     Axya = [1 0 -v*cos(a)*T*sin(A(kk-1)+(dA/2));
@@ -81,7 +81,7 @@ for kk=2:N,
     % Plot robot drivning Ground Truth path
     plot_threewheeled([CONTROL(kk-1,3);CONTROL(kk-1,4);CONTROL(kk-1,5)], 100, 612, 2, a, 150, 50, L);
     drawnow();
-end;
+end
 
 
 disp('Plotting ...');
@@ -94,10 +94,10 @@ figure;
     xlabel('X [mm] World co-ordinates');
     ylabel('Y [mm] World co-ordinates');
     hold on;
-        for kk = 1:5:N, % Change the step to plot less seldom, i.e. every 5th
+        for kk = 1:5:N % Change the step to plot less seldom, i.e. every 5th
             C = [P(kk,1:3);P(kk,4:6);P(kk,7:9)];
             plot_uncertainty([X(kk) Y(kk) A(kk)]', C, 1, 2);
-        end;
+        end
     hold off;
     axis('equal');
 
@@ -120,5 +120,18 @@ subplot(3,1,3); hold on;
     plot((A'+sqrt(P(:,9)))*180/pi, 'b:');
     plot((A'-sqrt(P(:,9)))*180/pi, 'b:');
 hold off;
+
+% Plot the errors
+figure;hold on;
+    subplot(3,1,1); plot(X.' - CONTROL(:,3), 'b'); title('X error [mm]');
+    subplot(3,1,2); plot(Y.' - CONTROL(:,4), 'b'); title('Y error [mm]');
+    subplot(3,1,3); plot(A.'.*180/pi - CONTROL(:,5).*180/pi, 'b'); title('A error [deg]');
+hold off;
+
+Epos = sqrt((X.' - CONTROL(:,3)).^2 + (Y.' - CONTROL(:,4)).^2);
+figure;hold on;
+    plot(Epos, 'b:'); title('Euclidean distance error [mm]');
+hold off;
+
 
 
