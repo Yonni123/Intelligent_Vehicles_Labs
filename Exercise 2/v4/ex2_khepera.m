@@ -5,10 +5,10 @@
 %
 
 clear all;
-close all;
+%close all;
 
 % TASK SETTINGS
-SamplingRate = 10;   % Seldom of the sampling (1 uses all sample points, 10 uses every 10th point)
+SamplingRate = 1;   % Seldom of the sampling (1 uses all sample points, 10 uses every 10th point)
 
 % %%% Khepera settings 
 WHEEL_BASE = 53;                % [mm]
@@ -26,7 +26,7 @@ SIGMAr = SIGMA_WHEEL_ENCODER;
 
 
 % Load encoder values
-ENC = load('khepera_circle.txt');
+ENC = load('khepera.txt');
 
 
 % Transform encoder values (pulses) into distance travelled by the wheels (mm)
@@ -46,6 +46,7 @@ YW(1) = 0;
 
 % Run until no more encoder values are available
 disp('Calculating ...');
+figure
 for kk=2:N,
     % Change of wheel displacements, i.e displacement of left and right wheels
     dDr = Dr(kk) - Dr(kk-1);
@@ -116,7 +117,7 @@ CV = cov(dDa,dAa*180/pi);
 disp('Plotting ...');
 
 % Plot the path taken by the robot, by plotting the uncertainty in the current position
-figure; 
+figure(2); 
     %plot(X, Y, 'b.');
     title('Path taken by the robot [Wang]');
     xlabel('X [mm] World co-ordinates');
