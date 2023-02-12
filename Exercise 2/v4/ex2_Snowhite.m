@@ -11,13 +11,6 @@ close all;
 L = 680;               % [mm] wheelbase
 T = 0.050;             % [sec] Sampling time
 
-% %%% Uncertainty settings, which are be the same for the left and right encoders
-SIGMA_WHEEL_ENCODER = 0.5/12;   % The error in the encoder is 0.5mm / 12mm travelled
-% Use the same uncertainty in both of the wheel encoders
-SIGMAl = SIGMA_WHEEL_ENCODER;
-SIGMAr = SIGMA_WHEEL_ENCODER;
-
-
 % Load encoder values
 CONTROL = load('snowhite.txt');
 
@@ -26,6 +19,13 @@ X(1) = CONTROL(1,3);
 Y(1) = CONTROL(1,4);
 A(1) = CONTROL(1,5);
 P(1,1:9) = [1 0 0 0 1 0 0 0 (1*pi/180)^2];
+
+syms symv syma symT symx symy theta symL
+X_k = [symx + symv*cos(syma)*symT*cos(theta+(symv*sin(syma)*symT)/(2*symL));
+       symy + symv*cos(syma)*symT*sin(theta+(symv*sin(syma)*symT)/(2*symL));
+       theta + (symv*sin(syma)*symT)/symL];
+j_x = jacobian(X_k, [symx, symy, theta]); % J_{X_{k-1}}
+j_vat = jacobian(X_k, [symv, syma, symT]); % J_{vaT}
 
 % Run until no more values are available, i.e. speed and steering angle
 N = max(size(CONTROL)); 
@@ -53,19 +53,19 @@ for kk=2:N
     A(kk) = mod(A(kk-1) + dA, 2*pi);
     
     % Predict the new uncertainty in the state variables (Error prediction)
-    Cxya_old = [P(kk-1,1:3);P(kk-1,4:6);P(kk-1,7:9)];   % Uncertainty in state variables at time k-1 [3x3]    
+    Cxya_old = [P(kk-1,1:3);P(kk-1,4:6);P(kk-1,7:9)];   % Uncertainty in state variables at time k-1 [3x3]
+    
+    Axya = subs(j_x,[symv, syma, symT, symx, symy, theta, symL],[v, a, T, X(kk-1), Y(kk-1), A(kk-1), L]);
+    
+    Au = subs(j_vat,[symv, syma, symT, symx, symy, theta, symL],[v, a, T, X(kk-1), Y(kk-1), A(kk-1), L]);
 
-    %Cu =   [1 0;0 1];               % Uncertainty in the input variables [2x2]
-    %Axya = [1 0 0;0 1 0;0 0 1];     % Jacobian matrix w.r.t. X, Y and A [3x3]
-    %Au =   [0 0;0 0;0 0];           % Jacobian matrix w.r.t. dD and dA [3x2]
-    Axya = [1 0 -v*cos(a)*T*sin(A(kk-1)+(dA/2));
-            0 1 v*cos(a)*T*cos(A(kk-1)+(dA/2));
-            0 0 1];
-    Au = [-sin(A(kk-1)+(dA/2)) -(1/2)*dD*sin(A(kk-1)+(dA/2));
-          cos(A(kk-1)+(dA/2)) (1/2)*dD*cos(A(kk-1)+(dA/2));
-          0 1];
-    Cu =   [(SIGMAr^2+SIGMAl^2)/4   0;
-            0   (SIGMAr^2+SIGMAl^2)/L^2];   % You should write the correct one, which replaces the one above!
+    sigma_v = 10;
+    sigma_a = 0.01;
+    sigma_t = T/10000;
+
+    Cu =   [sigma_v^2   0   0;
+            0   sigma_a^2   0;
+            0   0   sigma_t^2]; % Sigma_vaT
     
     % Use the law of error predictions, which gives the new uncertainty
     Cxya_new = Axya*Cxya_old*Axya' + Au*Cu*Au';
