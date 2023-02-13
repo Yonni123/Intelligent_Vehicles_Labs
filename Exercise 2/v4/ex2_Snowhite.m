@@ -127,7 +127,7 @@ hold off;
 figure;hold on;
     subplot(3,1,1); plot(X.' - CONTROL(:,3), 'b'); title('X error [mm]');
     subplot(3,1,2); plot(Y.' - CONTROL(:,4), 'b'); title('Y error [mm]');
-    subplot(3,1,3); plot(angdiff(A*180/pi,CONTROL(:,5).'*180/pi), 'b'); title('A error [deg]');
+    subplot(3,1,3); plot(angdiff(A,CONTROL(:,5).')*180/pi, 'b'); title('A error [deg]');
 hold off;
 
 Epos = sqrt((X.' - CONTROL(:,3)).^2 + (Y.' - CONTROL(:,4)).^2);
