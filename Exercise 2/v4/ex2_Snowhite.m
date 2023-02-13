@@ -30,10 +30,12 @@ j_vat = jacobian(X_k, [symv, syma, symT]); % J_{vaT}
 % Run until no more values are available, i.e. speed and steering angle
 N = max(size(CONTROL)); 
 disp('Calculating ...');
+total_dist = 0;
 for kk=2:N  
     % Read current control values
     v = CONTROL(kk-1,1); % Speed of the steering wheel
     a = CONTROL(kk-1,2); % Angle of the steering wheel
+    total_dist = total_dist+T*v;
     
     % Change of relative movements
     %dD = 0;
@@ -59,13 +61,13 @@ for kk=2:N
     
     Au = subs(j_vat,[symv, syma, symT, symx, symy, theta, symL],[v, a, T, X(kk-1), Y(kk-1), A(kk-1), L]);
 
-    sigma_v = 10;
-    sigma_a = 0.01;
-    sigma_t = T/10000;
+    sigma_v = 0.1;
+    sigma_a = 0.1;
+    sigma_t = 0.0001;
 
     Cu =   [sigma_v^2   0   0;
             0   sigma_a^2   0;
-            0   0   sigma_t^2]; % Sigma_vaT
+            0   0   sigma_t^2];
     
     % Use the law of error predictions, which gives the new uncertainty
     Cxya_new = Axya*Cxya_old*Axya' + Au*Cu*Au';
@@ -125,7 +127,7 @@ hold off;
 figure;hold on;
     subplot(3,1,1); plot(X.' - CONTROL(:,3), 'b'); title('X error [mm]');
     subplot(3,1,2); plot(Y.' - CONTROL(:,4), 'b'); title('Y error [mm]');
-    subplot(3,1,3); plot(A.'.*180/pi - CONTROL(:,5).*180/pi, 'b'); title('A error [deg]');
+    subplot(3,1,3); plot(angdiff(A*180/pi,CONTROL(:,5).'*180/pi), 'b'); title('A error [deg]');
 hold off;
 
 Epos = sqrt((X.' - CONTROL(:,3)).^2 + (Y.' - CONTROL(:,4)).^2);
@@ -133,5 +135,10 @@ figure;hold on;
     plot(Epos, 'b:'); title('Euclidean distance error [mm]');
 hold off;
 
+
+disp('Length of track (mm)');
+disp(total_dist);
+disp('Travel Time (s):');
+disp(T*size(CONTROL, 1))
 
 
