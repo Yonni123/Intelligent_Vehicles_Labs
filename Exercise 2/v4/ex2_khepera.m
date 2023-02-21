@@ -8,7 +8,7 @@ clear all;
 %close all;
 
 % TASK SETTINGS
-SamplingRate = 1;   % Seldom of the sampling (1 uses all sample points, 10 uses every 10th point)
+SamplingRate = 10;   % Seldom of the sampling (1 uses all sample points, 10 uses every 10th point)
 
 % %%% Khepera settings 
 WHEEL_BASE = 53;                % [mm]
@@ -26,7 +26,7 @@ SIGMAr = SIGMA_WHEEL_ENCODER;
 
 
 % Load encoder values
-ENC = load('khepera.txt');
+ENC = load('khepera_circle.txt');
 
 
 % Transform encoder values (pulses) into distance travelled by the wheels (mm)
