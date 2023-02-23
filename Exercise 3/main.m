@@ -62,6 +62,14 @@ LD_FLAGS  = load('laser_flags.txt');
 X(1) = CONTROL(1,4);
 Y(1) = CONTROL(1,5);
 A(1) = CONTROL(1,6);
+P(1,1:9) = [1 0 0 0 1 0 0 0 (1*pi/180)^2];
+
+syms symv syma symT symx symy theta symL
+X_k = [symx + symv*cos(syma)*symT*cos(theta+(symv*sin(syma)*symT)/(2*symL));
+       symy + symv*cos(syma)*symT*sin(theta+(symv*sin(syma)*symT)/(2*symL));
+       theta + (symv*sin(syma)*symT)/symL];
+j_x = jacobian(X_k, [symx, symy, theta]); % J_{X_{k-1}}
+j_vat = jacobian(X_k, [symv, syma, symT]); % J_{vaT}
 
 scan_idx = 1;
 fig_path = figure;
@@ -139,7 +147,28 @@ for kk = 2:no_inputs,
     A(kk) = A(kk-1) + sin(a)*v*T/L;
     
     % ALSO UPDATE THE UNCERTAINTY OF THE POSITION
-    % Task 2 Dead Reckoning - Add you code here
+    % Task 2 Dead Reckoning - Add your code here
+
+    % Predict the new uncertainty in the state variables (Error prediction)
+    Cxya_old = [P(kk-1,1:3);P(kk-1,4:6);P(kk-1,7:9)];   % Uncertainty in state variables at time k-1 [3x3]
+    
+    Axya = subs(j_x,[symv, syma, symT, symx, symy, theta, symL],[v, a, T, X(kk-1), Y(kk-1), A(kk-1), L]);
+    
+    Au = subs(j_vat,[symv, syma, symT, symx, symy, theta, symL],[v, a, T, X(kk-1), Y(kk-1), A(kk-1), L]);
+
+    sigma_v = 0.1;
+    sigma_a = 0.1;
+    sigma_t = 0.0001;
+
+    Cu =   [sigma_v^2   0   0;
+            0   sigma_a^2   0;
+            0   0   sigma_t^2];
+    
+    % Use the law of error predictions, which gives the new uncertainty
+    Cxya_new = Axya*Cxya_old*Axya' + Au*Cu*Au';
+    
+    % Store the new co-variance matrix
+    P(kk,1:9) = [Cxya_new(1,1:3) Cxya_new(2,1:3) Cxya_new(3,1:3)];
     
 end
 
@@ -162,3 +191,18 @@ subplot(3,1,3);
 plot(ERROR(:,3)*180/pi,'b'); hold;
 plot(sqrt(P(:,9))*180/pi,'r'); % one sigma
 title('Error A [degree] and uncertainty [std] (red)');
+
+% Plot the path taken by the robot, by plotting the uncertainty in the current position
+figure; 
+    plot(X, Y, 'b.'); hold on; % By dead reconing 
+    plot(CONTROL(:,3),CONTROL(:,4),'k.'); % Ground Truth
+    title('Path taken by the robot [Wang]');
+    xlabel('X [mm] World co-ordinates');
+    ylabel('Y [mm] World co-ordinates');
+    hold on;
+        for kk = 1:5:N % Change the step to plot less seldom, i.e. every 5th
+            C = [P(kk,1:3);P(kk,4:6);P(kk,7:9)];
+            plot_uncertainty([X(kk) Y(kk) A(kk)]', C, 1, 2);
+        end
+    hold off;
+    axis('equal');
