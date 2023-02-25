@@ -1,11 +1,3 @@
-% This function calculates the normal vectors to the line segments
-function [normal_vectors] = find_normal_vectors(LINEMODEL)
-    for i = 1:size(LINEMODEL,1),
-        current_line = LINEMODEL(i,:);
-        current_normal = [current_line(2) - current_line(4), current_line(3) - current_line(1)];    % Normal vector to the line segment
-        normal_vectors(i,:) = current_normal/norm(current_normal);  % Divide by norm to get unit vector (length = 1)
-    end;
-
 %
 % Fits (by translation and rotation) data points to a set of 
 % line segments, i.e. applying the Cox's algorithm
@@ -59,4 +51,10 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
         %-> Add your code here
     end;
 
-    
+% This function calculates the normal vectors to the line segments
+function normal_vectors = find_normal_vectors(LINEMODEL)
+    for i = 1:size(LINEMODEL,1),
+        current_line = LINEMODEL(i,:);
+        current_normal = [current_line(2) - current_line(4), current_line(3) - current_line(1)];    % Normal vector to the line segment
+        normal_vectors(i,:) = current_normal/norm(current_normal);  % Divide by norm to get unit vector (length = 1)
+    end;
