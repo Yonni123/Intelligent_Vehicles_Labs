@@ -13,8 +13,8 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
     % Init variables
     ddx = 0; ddy = 0; dda = 0;  % The translation and rotation to be returned
     Rx = POSE(1,1); Ry = POSE(2,1); Ra = POSE(3,1);     % The initial pose (in world co-ordinates)
-    sALFA = SensorPose(1); sBETA = SensorPose(2); sGAMMA = SensorPose(3);   % The sensor pose (in robot co-ordinates)
-    max_iterations = 1; % <------YOU NEED TO CHANGE THIS NUMBER
+    Sx = SensorPose(1); Sy = SensorPose(2); Sa = SensorPose(3);   % X, Y and Theta of the sensor location (in robot co-ordinates)
+    max_iterations = 100; % <------YOU NEED TO CHANGE THIS NUMBER
     no_update = 0;
     
     % Step 0 - Normal vectors (length = 1) to the line segments
@@ -24,14 +24,28 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
     for iteration = 1:max_iterations,
         % Step 1 Translate and rotate data points
             % 1.1) Relative measurements => Sensor co-ordinates
-            Rx = Rx + ddx; Ry = Ry + ddy; Ra = Ra + dda;  % Update the pose
+            X = DIS.*cos(ANG); 
+            Y = DIS.*sin(ANG);
 
             % 1.2) Sensor co-ordinates => Robot co-ordinates
-            %-> Add your code here
+            R = [cos(Sa) -sin(Sa) Sx;
+                 sin(Sa) cos(Sa) Sy;
+                 0 0 1];
+            Xs = R*[X Y ones(size(X))]';
 
             % 1.3) Robot co-ordinates => World co-ordinates
-            %-> Add your code here
-      
+            R = [cos(Ra) -sin(Ra) Rx;
+                 sin(Ra) cos(Ra) Ry;
+                 0 0 1];
+            Xw = R.*[Xs 1]';
+        
+        % Plot the data points after the transformation to see if it is correct
+        plot(Xw(1,:),Xw(2,:),'r*');
+        hold on;
+        plot(LINEMODEL(:,1),LINEMODEL(:,2),'b-');
+        plot(LINEMODEL(:,3),LINEMODEL(:,4),'b-');
+        hold off;
+        pause(0.1);
         % Step 2 Find targets for data points
         %-> Add your code here
         
