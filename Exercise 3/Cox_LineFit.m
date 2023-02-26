@@ -26,33 +26,17 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
             % 1.1) Relative measurements => Sensor co-ordinates
             X_laser = DIS.*cos(ANG);
             Y_laser = DIS.*sin(ANG);
+            SensorCoord = [X_laser; Y_laser; ones(1, length(X_laser))]; % Sensor co-ordinates (in sensor co-ordinates)
 
             % 1.2) Sensor co-ordinates => Robot co-ordinates
             R = [cos(Sa) -sin(Sa) Sx; sin(Sa) cos(Sa) Sy; 0 0 1]; % Rotation matrix
-            RobotCoord = zeros(3, length(X_laser)); % Pre-allocate memory
-            for i = 1:length(X_laser)
-                RobotCoord(:, i) = R * [X_laser(i), Y_laser(i), 1]';
-            end
+            RobotCoord = R * SensorCoord; % Robot co-ordinates (in robot co-ordinates)
 
 
             % 1.3) Robot co-ordinates => World co-ordinates
             % Rotate and translate using one matrix
             R = [cos(Ra) -sin(Ra) Rx; sin(Ra) cos(Ra) Ry; 0 0 1]; % Rotation matrix
-            WorldCoord = zeros(3, length(X_laser)); % Pre-allocate memory
-            for i = 1:length(X_laser)
-                WorldCoord(:, i) = R * RobotCoord(:, i);
-            end
-
-        
-        % Scatter plot the world co-ordinates to see if they are correct
-        figure(1);
-        scatter(WorldCoord(1,:), WorldCoord(2,:));
-        % Plot each point in the LineModel and connect them to form lines
-        hold on;
-        for i = 1:size(LINEMODEL,1),
-            plot(LINEMODEL(i,[1 3]), LINEMODEL(i,[2 4]), 'r');
-        end;
-        hold off;
+            WorldCoord = R * RobotCoord; % World co-ordinates (in world co-ordinates)
 
         % Step 2 Find targets for data points
         %-> Add your code here
