@@ -26,20 +26,40 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
             % 1.1) Relative measurements => Sensor co-ordinates
             X_laser = DIS.*cos(ANG);
             Y_laser = DIS.*sin(ANG);
-            SensorCoord = [X_laser; Y_laser; ones(1, length(X_laser))]; % Sensor co-ordinates (in sensor co-ordinates)
+            SensorCoord = [X_laser; Y_laser; ones(1, length(X_laser))]; % Coordinates relative to the sensor
 
             % 1.2) Sensor co-ordinates => Robot co-ordinates
-            R = [cos(Sa) -sin(Sa) Sx; sin(Sa) cos(Sa) Sy; 0 0 1]; % Rotation matrix
-            RobotCoord = R * SensorCoord; % Robot co-ordinates (in robot co-ordinates)
-
+            R = [cos(Sa) -sin(Sa) Sx; sin(Sa) cos(Sa) Sy; 0 0 1];
+            RobotCoord = R * SensorCoord; % Coordinates relative to the robot
 
             % 1.3) Robot co-ordinates => World co-ordinates
-            % Rotate and translate using one matrix
-            R = [cos(Ra) -sin(Ra) Rx; sin(Ra) cos(Ra) Ry; 0 0 1]; % Rotation matrix
-            WorldCoord = R * RobotCoord; % World co-ordinates (in world co-ordinates)
+            R = [cos(Ra) -sin(Ra) Rx; sin(Ra) cos(Ra) Ry; 0 0 1];
+            WorldCoord = R * RobotCoord; % Coordinates relative to the world
 
         % Step 2 Find targets for data points
-        %-> Add your code here
+        TargetLine = zeros(size(WorldCoord,2),1); % The index of the line segment that each data point is closest to
+        for i = 1:size(WorldCoord,2),   % For each data point
+            Dists = zeros(size(LINEMODEL,1),1); % Distances from the data point each line segments
+            for j = 1:size(LINEMODEL,1),
+                current_line = LINEMODEL(j,:);
+                current_point = WorldCoord(1:2,i)';
+                vi = current_point; % Just to be consistent with the notation in the PDF
+                
+                ui = normal_vectors(j,:);   % Normal vector to the line segment
+                
+                z = current_line(1:2); % Point on the line segment
+                ri = dot(ui,z); % Distance from origo to the line segment
+                
+                % Distance from the data point to the line segment
+                yi = ri - dot(ui,vi);
+
+                Dists(j) = abs(yi);
+            end
+            % Find the line segment with the smallest distance
+            [min_dist, min_index] = min(Dists);
+            TargetLine(i) = min_index;
+            min_index = 0;
+        end;
         
         % Step 3 Set up linear equation system, find b = (dx,dy,da)' from the LS
         %-> Add your code here
@@ -59,6 +79,14 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
 
 % This function calculates the normal vectors to the line segments
 function normal_vectors = find_normal_vectors(LINEMODEL)
+    for i = 1:size(LINEMODEL,1),
+        current_line = LINEMODEL(i,:);
+        current_normal = [current_line(2) - current_line(4), current_line(3) - current_line(1)];    % Normal vector to the line segment
+        normal_vectors(i,:) = current_normal/norm(current_normal);  % Divide by norm to get unit vector (length = 1)
+    end;
+
+% This function calculates the normal vectors to the line segments
+function pruned_coordinates = prune_outliers(LINEMODEL)
     for i = 1:size(LINEMODEL,1),
         current_line = LINEMODEL(i,:);
         current_normal = [current_line(2) - current_line(4), current_line(3) - current_line(1)];    % Normal vector to the line segment
