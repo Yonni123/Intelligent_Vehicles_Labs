@@ -14,7 +14,7 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
     ddx = 0; ddy = 0; dda = 0;  % The translation and rotation to be returned
     Rx = POSE(1,1); Ry = POSE(2,1); Ra = POSE(3,1);     % The initial pose (in world co-ordinates)
     Sx = SensorPose(1); Sy = SensorPose(2); Sa = SensorPose(3);   % X, Y and Theta of the sensor location (in robot co-ordinates)
-    max_iterations = 100; % <------YOU NEED TO CHANGE THIS NUMBER
+    max_iterations = 100;
     no_update = 0;
     
     % Step 0 - Normal vectors (length = 1) to the line segments
@@ -36,30 +36,39 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
             R = [cos(Ra) -sin(Ra) Rx; sin(Ra) cos(Ra) Ry; 0 0 1];
             WorldCoord = R * RobotCoord; % Coordinates relative to the world
 
-        % Step 2 Find targets for data points
-        TargetLine = zeros(size(WorldCoord,2),1); % The index of the line segment that each data point is closest to
-        for i = 1:size(WorldCoord,2),   % For each data point
-            Dists = zeros(size(LINEMODEL,1),1); % Distances from the data point each line segments
-            for j = 1:size(LINEMODEL,1),
-                current_line = LINEMODEL(j,:);
-                current_point = WorldCoord(1:2,i)';
-                vi = current_point; % Just to be consistent with the notation in the PDF
-                
-                ui = normal_vectors(j,:);   % Normal vector to the line segment
-                
-                z = current_line(1:2); % Point on the line segment
-                ri = dot(ui,z); % Distance from origo to the line segment
-                
-                % Distance from the data point to the line segment
-                yi = ri - dot(ui,vi);
+            plot_points_and_lineModel(WorldCoord, LINEMODEL, 6);
 
-                Dists(j) = abs(yi);
-            end
-            % Find the line segment with the smallest distance
-            [min_dist, min_index] = min(Dists);
-            TargetLine(i) = min_index;
-            min_index = 0;
-        end;
+        % Step 2 Find targets for data points
+            % 2.1) Assign each data point to the closest line segment
+            TargetLine = zeros(size(WorldCoord,2),1); % The index of the line segment that each data point is closest to
+            MinDist = zeros(size(WorldCoord,2),1);    % The distance from each data point to the closest line segment (used for pruning outliers)
+            for i = 1:size(WorldCoord,2),   % For each data point
+                Dists = zeros(size(LINEMODEL,1),1); % Distances from the data point each line segments
+                for j = 1:size(LINEMODEL,1),
+                    current_line = LINEMODEL(j,:);
+                    current_point = WorldCoord(1:2,i)';
+                    vi = current_point; % Just to be consistent with the notation in the PDF
+
+                    ui = normal_vectors(j,:);   % Normal vector to the line segment
+
+                    z = current_line(1:2); % Point on the line segment
+                    ri = dot(ui,z); % Distance from origo to the line segment
+
+                    % Distance from the data point to the line segment
+                    yi = ri - dot(ui,vi);
+
+                    Dists(j) = yi;
+                end
+                % Find the line segment with the smallest distance
+                [~, min_index] = min(abs(Dists));
+                TargetLine(i) = min_index;
+                MinDist(i) = Dists(min_index);  % Not same as min_dist since Dists contains the actual distance, not the absolute value of it;
+            end;
+
+            % 2.2) Prune outliers
+            threshold = 30;    % Threshold distance at which a data point is considered an outlier
+            [WorldCoord, TargetLine] = prune_outliers(WorldCoord, TargetLine, MinDist, threshold);
+            plot_points_and_lineModel(WorldCoord, LINEMODEL, 10);
         
         % Step 3 Set up linear equation system, find b = (dx,dy,da)' from the LS
         %-> Add your code here
@@ -85,10 +94,24 @@ function normal_vectors = find_normal_vectors(LINEMODEL)
         normal_vectors(i,:) = current_normal/norm(current_normal);  % Divide by norm to get unit vector (length = 1)
     end;
 
-% This function calculates the normal vectors to the line segments
-function pruned_coordinates = prune_outliers(LINEMODEL)
-    for i = 1:size(LINEMODEL,1),
-        current_line = LINEMODEL(i,:);
-        current_normal = [current_line(2) - current_line(4), current_line(3) - current_line(1)];    % Normal vector to the line segment
-        normal_vectors(i,:) = current_normal/norm(current_normal);  % Divide by norm to get unit vector (length = 1)
-    end;
+% This function removes outliers from the data points that's a threshold distance away from the line segments
+function [pruned_coordinates, new_target_lines] = prune_outliers(coordinates, target_lines, dist_from_line, threshold)
+    pruned_coordinates = [];    
+    new_target_lines = [];      % Start with empty list of pruned data points and add the non-outliers to it
+    for i = 1:size(coordinates,2),
+        if abs(dist_from_line(i)) < threshold,
+            pruned_coordinates = [pruned_coordinates coordinates(:,i)]; % Add the data point to the list of pruned data points
+            new_target_lines = [new_target_lines; target_lines(i)]; % Add the target line to the list of pruned target lines
+        end
+    end
+
+function plot_points_and_lineModel(points, lineModel, figureNumber)
+    % New figure
+    figure(figureNumber);
+    hold on;
+    plot(points(1,:), points(2,:), 'ro');
+    for i = 1:size(lineModel,1),
+        current_line = lineModel(i,:);
+        plot([current_line(1) current_line(3)], [current_line(2) current_line(4)], 'b');
+    end
+    hold off;
