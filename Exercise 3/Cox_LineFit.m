@@ -36,7 +36,7 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
             R = [cos(Ra) -sin(Ra) Rx; sin(Ra) cos(Ra) Ry; 0 0 1];
             WorldCoord = R * RobotCoord; % Coordinates relative to the world
 
-            plot_points_and_lineModel(WorldCoord, LINEMODEL, 6);
+            %plot_points_and_lineModel(WorldCoord, LINEMODEL, 6);
 
         % Step 2 Find targets for data points
             % 2.1) Assign each data point to the closest line segment
@@ -68,14 +68,27 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
             % 2.2) Prune outliers
             threshold = 30;    % Threshold distance at which a data point is considered an outlier
             [WorldCoord, TargetLine] = prune_outliers(WorldCoord, TargetLine, MinDist, threshold);
-            plot_points_and_lineModel(WorldCoord, LINEMODEL, 10);
+            % plot_points_and_lineModel(WorldCoord, LINEMODEL, 10);
         
         % Step 3 Set up linear equation system, find b = (dx,dy,da)' from the LS
-        %-> Add your code here
-        
-        b = POSE/max_iterations; % <--- You shall change this! This is only
-        % for demonstation, i.e. return the same pose as sent in.
-        C = 0; % Covarince matrix
+        ui = normal_vectors(TargetLine,:);   % Normal vectors to the line segments
+        ui1 = ui(:,1); ui2 = ui(:,2);   % Separate the x and y components of the normal vectors
+        xi1 = ui1;
+        xi2 = ui2;
+
+        vi = WorldCoord(1:2,:)';    % Data points
+        vm = [Rx; Ry];
+        % Subtract every data point with the robot position (vi - vm)
+        diff = vi - repmat(vm', size(vi,1), 1);
+        something = [0 -1;1 0] * diff';
+        xi3 = dot(ui', something)
+
+        A = [xi1 xi2 xi3'];
+        y = MinDist;    % The distance from each data point to the closest line segment
+        b = inv(A'*A)*A'*vi;    % <--- This is the solution to the linear equation system
+
+        n = max(size(A));   % Number of data points
+        C = inv(A'*A)*n;    % Covariance matrix
         
         % Step 4 Add latest contribution to the overall congruence 
         ddx = ddx + b(1);
@@ -83,14 +96,20 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
         dda = dda + b(3);
         
         % Step 5  Check if the process has converged
-        %-> Add your code here
+        if (sqrt(b(1)^2 + b(2)^2) < 5 )&&(abs(b(3) <0.1*pi/180) ),
+            break;  % stop loop
+        end
+
+        % Step 6 Plot the result to see if it's working
+        plot_points_and_lineModel(WorldCoord, LINEMODEL, 10);
+
     end;
 
 % This function calculates the normal vectors to the line segments
 function normal_vectors = find_normal_vectors(LINEMODEL)
     for i = 1:size(LINEMODEL,1),
         current_line = LINEMODEL(i,:);
-        current_normal = [current_line(2) - current_line(4), current_line(3) - current_line(1)];    % Normal vector to the line segment
+        current_normal = [current_line(2) - current_line(4), current_line(3) - current_line(1)];    % Normal vector to the line segment y1 - y2, x2 - x1
         normal_vectors(i,:) = current_normal/norm(current_normal);  % Divide by norm to get unit vector (length = 1)
     end;
 
