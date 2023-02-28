@@ -115,6 +115,8 @@ for kk = 2:no_inputs,
         X(kk-1) = X(kk-1) + dx;
         Y(kk-1) = Y(kk-1) + dy;
         A(kk-1) = A(kk-1) + da;
+        figure(fig_path)
+        plot_uncertainty([X(kk-1) Y(kk-1)]', C, 1, 2);
         % dx is the estimated x-position error
         % dy is the estimated y-position error
         % da is the estimated angle error

@@ -16,10 +16,6 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose, II
     Sx = SensorPose(1); Sy = SensorPose(2); Sa = SensorPose(3);   % X, Y and Theta of the sensor location (in robot co-ordinates)
     max_iterations = 100;
     no_update = 0;
-
-    if (II == 272),
-        disp('STOP HERE');
-    end
     
     % Step 0 - Normal vectors (length = 1) to the line segments
     normal_vectors = find_normal_vectors(LINEMODEL);
@@ -107,7 +103,6 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose, II
         if (sqrt(b(1)^2 + b(2)^2) < 5 )&&(abs(b(3) <0.1*pi/180) ),
             break;  % stop loop
         end
-        %plot_points_and_lineModel(WorldCoord, LINEMODEL, 6);
     end;
 
 % This function calculates the normal vectors to the line segments
