@@ -111,7 +111,10 @@ for kk = 2:no_inputs,
         % [dx,dy,da,C] = Cox_LineFit(angs, meas, [X(kk-1) Y(kk-1) A(kk-1)]', LINEMODEL,[alfa beta gamma]);
         % Returns => Position fix + Unceratinty of the position fix
         LINEMODEL = [REF(LINES(:,1),1:2) REF(LINES(:,2),1:2)];
-        [dx,dy,da,C] = Cox_LineFit(angs, meas, [X(kk-1) Y(kk-1) A(kk-1)]', LINEMODEL,[alfa beta gamma]);
+        [dx,dy,da,C] = Cox_LineFit(angs, meas, [X(kk-1) Y(kk-1) A(kk-1)]', LINEMODEL,[alfa beta gamma], kk-1);
+        X(kk-1) = X(kk-1) + dx;
+        Y(kk-1) = Y(kk-1) + dy;
+        A(kk-1) = A(kk-1) + da;
         % dx is the estimated x-position error
         % dy is the estimated y-position error
         % da is the estimated angle error

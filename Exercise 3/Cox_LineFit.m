@@ -9,13 +9,17 @@
 % Output: ddx,ddy,dda - the translation and rotation to be applied to the initial pose
 %         C - the covariance matrix
 % 
-function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
+function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose, II)
     % Init variables
     ddx = 0; ddy = 0; dda = 0;  % The translation and rotation to be returned
     Rx = POSE(1,1); Ry = POSE(2,1); Ra = POSE(3,1);     % The initial pose (in world co-ordinates)
     Sx = SensorPose(1); Sy = SensorPose(2); Sa = SensorPose(3);   % X, Y and Theta of the sensor location (in robot co-ordinates)
     max_iterations = 100;
     no_update = 0;
+
+    if (II == 272),
+        disp('STOP HERE');
+    end
     
     % Step 0 - Normal vectors (length = 1) to the line segments
     normal_vectors = find_normal_vectors(LINEMODEL);
@@ -33,7 +37,7 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
             RobotCoord = R * SensorCoord; % Coordinates relative to the robot
 
             % 1.3) Robot co-ordinates => World co-ordinates
-            R = [cos(Ra) -sin(Ra) Rx; sin(Ra) cos(Ra) Ry; 0 0 1];
+            R = [cos(Ra+dda) -sin(Ra+dda) Rx+ddx; sin(Ra+dda) cos(Ra+dda) Ry+ddy; 0 0 1];
             WorldCoord = R * RobotCoord; % Coordinates relative to the world
 
             %plot_points_and_lineModel(WorldCoord, LINEMODEL, 6);
@@ -67,7 +71,7 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
 
             % 2.2) Prune outliers
             threshold = 30;    % Threshold distance at which a data point is considered an outlier
-            [WorldCoord, TargetLine] = prune_outliers(WorldCoord, TargetLine, MinDist, threshold);
+            [WorldCoord, TargetLine, MinDist] = prune_outliers(WorldCoord, TargetLine, MinDist, threshold);
             % plot_points_and_lineModel(WorldCoord, LINEMODEL, 10);
         
         % Step 3 Set up linear equation system, find b = (dx,dy,da)' from the LS
@@ -81,14 +85,18 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
         % Subtract every data point with the robot position (vi - vm)
         diff = vi - repmat(vm', size(vi,1), 1);
         something = [0 -1;1 0] * diff';
-        xi3 = dot(ui', something)
+        xi3 = dot(ui', something);
 
         A = [xi1 xi2 xi3'];
         y = MinDist;    % The distance from each data point to the closest line segment
-        b = inv(A'*A)*A'*vi;    % <--- This is the solution to the linear equation system
+        b = inv(A'*A)*A'*y;    % <--- This is the solution to the linear equation system
 
         n = max(size(A));   % Number of data points
-        C = inv(A'*A)*n;    % Covariance matrix
+        yab = ( A*b - y )   % Residuals
+        yab2 = yab.^2;      % Squared residuals
+        summa = sum(yab2);  % Sum of squared residuals
+        s2 = summa/(n-4);   % Variance of the residuals
+        C = s2 * inv(A'*A);    % Covariance matrix
         
         % Step 4 Add latest contribution to the overall congruence 
         ddx = ddx + b(1);
@@ -99,10 +107,7 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose)
         if (sqrt(b(1)^2 + b(2)^2) < 5 )&&(abs(b(3) <0.1*pi/180) ),
             break;  % stop loop
         end
-
-        % Step 6 Plot the result to see if it's working
-        plot_points_and_lineModel(WorldCoord, LINEMODEL, 10);
-
+        %plot_points_and_lineModel(WorldCoord, LINEMODEL, 6);
     end;
 
 % This function calculates the normal vectors to the line segments
@@ -114,13 +119,15 @@ function normal_vectors = find_normal_vectors(LINEMODEL)
     end;
 
 % This function removes outliers from the data points that's a threshold distance away from the line segments
-function [pruned_coordinates, new_target_lines] = prune_outliers(coordinates, target_lines, dist_from_line, threshold)
+function [pruned_coordinates, new_target_lines, MinDist] = prune_outliers(coordinates, target_lines, dist_from_line, threshold)
     pruned_coordinates = [];    
     new_target_lines = [];      % Start with empty list of pruned data points and add the non-outliers to it
+    MinDist = [];
     for i = 1:size(coordinates,2),
         if abs(dist_from_line(i)) < threshold,
             pruned_coordinates = [pruned_coordinates coordinates(:,i)]; % Add the data point to the list of pruned data points
             new_target_lines = [new_target_lines; target_lines(i)]; % Add the target line to the list of pruned target lines
+            MinDist = [MinDist; dist_from_line(i)]; % Add the distance to the list of pruned distances
         end
     end
 
