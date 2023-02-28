@@ -75,7 +75,7 @@ scan_idx = 1;
 fig_path = figure;
 fig_env = figure;
 ScanPosIndx = [];
-
+N = max(size(CONTROL));
 % Plot the line model
 figure(fig_env); plot_line_segments(REF, LINES, 1);
      
@@ -122,7 +122,7 @@ for kk = 2:no_inputs,
         % Task 6 Kalmanfilterr with Cox position update (Exercise 4)
         
         % 
-        P(kk-1,1:9) = [0 0 0 0 0 0 0 0 0]; % Set current Position unsertainty
+        P(kk-1,1:9) = [1 0 0 0 1 0 0 0 (1*pi/180)^2]; % Set current Position unsertainty
         
         
         % Next time use the next scan
@@ -194,8 +194,8 @@ title('Error A [degree] and uncertainty [std] (red)');
 
 % Plot the path taken by the robot, by plotting the uncertainty in the current position
 figure; 
-    plot(X, Y, 'b.'); hold on; % By dead reconing 
-    plot(CONTROL(:,3),CONTROL(:,4),'k.'); % Ground Truth
+    plot(X, Y, 'b.'); hold on; % By dead reckoning 
+    plot(CONTROL(:,4),CONTROL(:,5),'k.'); % Ground Truth
     title('Path taken by the robot [Wang]');
     xlabel('X [mm] World co-ordinates');
     ylabel('Y [mm] World co-ordinates');
