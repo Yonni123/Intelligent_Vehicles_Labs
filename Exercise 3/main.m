@@ -63,9 +63,9 @@ X(1) = CONTROL(1,4);
 Y(1) = CONTROL(1,5);
 A(1) = CONTROL(1,6);
 P(1,1:9) = [1 0 0 0 1 0 0 0 (1*pi/180)^2];
-sigma_x = 10;
-sigma_y = 10;
-sigma_theta = 3;%*pi/180;
+sigma_x = 2;
+sigma_y = 2;
+sigma_theta = 1*pi/180;
 Error_pf = [sigma_x^2 0 0; 0 sigma_y^2 0; 0 0 sigma_theta^2];
 
 syms symv syma symT symx symy theta symL
@@ -133,9 +133,9 @@ for kk = 2:no_inputs,
 
         % Task 5a Kalman Filter with simulated position fixes (small) (Exercise 4)
         % Task 5b Kalman Filter with simulated position fixes (large) (Exercise 4)
-        %Xpf(kk-1) = CONTROL(kk-1,4) + randn(size(CONTROL(kk-1,4)))*sigma_x;
-        %Ypf(kk-1) = CONTROL(kk-1,5) + randn(size(CONTROL(kk-1,5)))*sigma_y;
-        %Apf(kk-1) = CONTROL(kk-1,6) + randn(size(CONTROL(kk-1,6)))*sigma_theta;
+        %Xpf(kk-1) = CONTROL(kk-1,4) + randn(size(CONTROL(kk-1,4)))*sqrt(sigma_x);
+        %Ypf(kk-1) = CONTROL(kk-1,5) + randn(size(CONTROL(kk-1,5)))*sqrt(sigma_y);
+        %Apf(kk-1) = CONTROL(kk-1,6) + randn(size(CONTROL(kk-1,6)))*sqrt(sigma_theta);
         
         % Task 6 Kalmanfilterr with Cox position update (Exercise 4)
         Xpf(kk-1) = X(kk-1) + dx;
