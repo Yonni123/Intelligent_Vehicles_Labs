@@ -21,7 +21,7 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose, II
     normal_vectors = find_normal_vectors(LINEMODEL);
     
     % The Loop - REPEAT UNTIL THE PROCESS CONVERGE
-    for iteration = 1:max_iterations,
+    for iteration = 1:max_iterations
         % Step 1 Translate and rotate data points
             % 1.1) Relative measurements => Sensor co-ordinates
             X_laser = DIS.*cos(ANG);
@@ -42,9 +42,9 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose, II
             % 2.1) Assign each data point to the closest line segment
             TargetLine = zeros(size(WorldCoord,2),1); % The index of the line segment that each data point is closest to
             MinDist = zeros(size(WorldCoord,2),1);    % The distance from each data point to the closest line segment (used for pruning outliers)
-            for i = 1:size(WorldCoord,2),   % For each data point
+            for i = 1:size(WorldCoord,2)   % For each data point
                 Dists = zeros(size(LINEMODEL,1),1); % Distances from the data point each line segments
-                for j = 1:size(LINEMODEL,1),
+                for j = 1:size(LINEMODEL,1)
                     current_line = LINEMODEL(j,:);
                     current_point = WorldCoord(1:2,i)';
                     vi = current_point; % Just to be consistent with the notation in the PDF
@@ -63,7 +63,7 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose, II
                 [~, min_index] = min(abs(Dists));
                 TargetLine(i) = min_index;
                 MinDist(i) = Dists(min_index);  % Not same as min_dist since Dists contains the actual distance, not the absolute value of it;
-            end;
+            end
 
             % 2.2) Prune outliers
             threshold = 30;    % Threshold distance at which a data point is considered an outlier
@@ -88,7 +88,7 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose, II
         b = inv(A'*A)*A'*y;    % <--- This is the solution to the linear equation system
 
         n = max(size(A));   % Number of data points
-        yab = ( A*b - y )   % Residuals
+        yab = (y - A*b);   % Residuals
         yab2 = yab.^2;      % Squared residuals
         summa = sum(yab2);  % Sum of squared residuals
         s2 = summa/(n-4);   % Variance of the residuals
@@ -100,26 +100,26 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose, II
         dda = dda + b(3);
         
         % Step 5  Check if the process has converged
-        if (sqrt(b(1)^2 + b(2)^2) < 5 )&&(abs(b(3) <0.1*pi/180) ),
+        if (sqrt(b(1)^2 + b(2)^2) < 5 )&&(abs(b(3)) <0.1*pi/180)
             break;  % stop loop
         end
-    end;
+    end
 
 % This function calculates the normal vectors to the line segments
 function normal_vectors = find_normal_vectors(LINEMODEL)
-    for i = 1:size(LINEMODEL,1),
+    for i = 1:size(LINEMODEL,1)
         current_line = LINEMODEL(i,:);
         current_normal = [current_line(2) - current_line(4), current_line(3) - current_line(1)];    % Normal vector to the line segment y1 - y2, x2 - x1
         normal_vectors(i,:) = current_normal/norm(current_normal);  % Divide by norm to get unit vector (length = 1)
-    end;
+    end
 
 % This function removes outliers from the data points that's a threshold distance away from the line segments
 function [pruned_coordinates, new_target_lines, MinDist] = prune_outliers(coordinates, target_lines, dist_from_line, threshold)
     pruned_coordinates = [];    
     new_target_lines = [];      % Start with empty list of pruned data points and add the non-outliers to it
     MinDist = [];
-    for i = 1:size(coordinates,2),
-        if abs(dist_from_line(i)) < threshold,
+    for i = 1:size(coordinates,2)
+        if abs(dist_from_line(i)) < threshold
             pruned_coordinates = [pruned_coordinates coordinates(:,i)]; % Add the data point to the list of pruned data points
             new_target_lines = [new_target_lines; target_lines(i)]; % Add the target line to the list of pruned target lines
             MinDist = [MinDist; dist_from_line(i)]; % Add the distance to the list of pruned distances
@@ -131,7 +131,7 @@ function plot_points_and_lineModel(points, lineModel, figureNumber)
     figure(figureNumber);
     hold on;
     plot(points(1,:), points(2,:), 'ro');
-    for i = 1:size(lineModel,1),
+    for i = 1:size(lineModel,1)
         current_line = lineModel(i,:);
         plot([current_line(1) current_line(3)], [current_line(2) current_line(4)], 'b');
     end

@@ -115,7 +115,7 @@ for kk = 2:no_inputs,
         X(kk-1) = X(kk-1) + dx;
         Y(kk-1) = Y(kk-1) + dy;
         A(kk-1) = A(kk-1) + da;
-        figure(fig_path)
+        figure(fig_path);
         plot_uncertainty([X(kk-1) Y(kk-1)]', C, 1, 2);
         % dx is the estimated x-position error
         % dy is the estimated y-position error
@@ -131,8 +131,7 @@ for kk = 2:no_inputs,
         % Task 6 Kalmanfilterr with Cox position update (Exercise 4)
         
         % 
-        P(kk-1,1:9) = [1 0 0 0 1 0 0 0 (1*pi/180)^2]; % Set current Position unsertainty
-        
+        P(kk-1,1:9) = reshape(C,[1,9]); % Set current Position unsertainty
         
         % Next time use the next scan
         scan_idx = mod(scan_idx, max(size(LD_HEAD))) + 1;
