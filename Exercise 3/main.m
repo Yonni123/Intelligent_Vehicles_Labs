@@ -63,6 +63,10 @@ X(1) = CONTROL(1,4);
 Y(1) = CONTROL(1,5);
 A(1) = CONTROL(1,6);
 P(1,1:9) = [1 0 0 0 1 0 0 0 (1*pi/180)^2];
+sigma_x = 10;
+sigma_y = 10;
+sigma_theta = 3;%*pi/180;
+Error_pf = [sigma_x^2 0 0; 0 sigma_y^2 0; 0 0 sigma_theta^2];
 
 syms symv syma symT symx symy theta symL
 X_k = [symx + symv*cos(syma)*symT*cos(theta+(symv*sin(syma)*symT)/(2*symL));
@@ -112,11 +116,6 @@ for kk = 2:no_inputs,
         % Returns => Position fix + Unceratinty of the position fix
         LINEMODEL = [REF(LINES(:,1),1:2) REF(LINES(:,2),1:2)];
         [dx,dy,da,C] = Cox_LineFit(angs, meas, [X(kk-1) Y(kk-1) A(kk-1)]', LINEMODEL,[alfa beta gamma], kk-1);
-        X(kk-1) = X(kk-1) + dx;
-        Y(kk-1) = Y(kk-1) + dy;
-        A(kk-1) = A(kk-1) + da;
-        figure(fig_path);
-        plot_uncertainty([X(kk-1) Y(kk-1)]', C, 1, 2);
         % dx is the estimated x-position error
         % dy is the estimated y-position error
         % da is the estimated angle error
@@ -126,13 +125,31 @@ for kk = 2:no_inputs,
         % Update the position, i.e. X(kk-1), Y(kk-1), A(kk-1) and C(kk-1)
         % Here you shall add your code for the three experiments
         % Task 4 Dead Reconing + Cox Update
+        %X(kk-1) = X(kk-1) + dx;
+        %Y(kk-1) = Y(kk-1) + dy;
+        %A(kk-1) = A(kk-1) + da;
+        %figure(fig_path);
+        %plot_uncertainty([X(kk-1) Y(kk-1)]', C, 1, 2);
+
         % Task 5a Kalman Filter with simulated position fixes (small) (Exercise 4)
         % Task 5b Kalman Filter with simulated position fixes (large) (Exercise 4)
+        %Xpf(kk-1) = CONTROL(kk-1,4) + randn(size(CONTROL(kk-1,4)))*sigma_x;
+        %Ypf(kk-1) = CONTROL(kk-1,5) + randn(size(CONTROL(kk-1,5)))*sigma_y;
+        %Apf(kk-1) = CONTROL(kk-1,6) + randn(size(CONTROL(kk-1,6)))*sigma_theta;
+        
         % Task 6 Kalmanfilterr with Cox position update (Exercise 4)
-        
-        % 
+        Xpf(kk-1) = X(kk-1) + dx;
+        Ypf(kk-1) = Y(kk-1) + dy;
+        Apf(kk-1) = A(kk-1) + da;
         P(kk-1,1:9) = reshape(C,[1,9]); % Set current Position unsertainty
-        
+
+        Error_x = [P(kk-1,1:3);P(kk-1,4:6);P(kk-1,7:9)];
+        P(kk-1,1:9) = reshape((Error_pf^(-1) + Error_x^(-1))^(-1),[1,9]);
+        POS = Error_pf*(Error_pf+Error_x)^(-1)*[X(kk-1); Y(kk-1); A(kk-1)] + Error_x*(Error_pf + Error_x)^(-1)*[Xpf(kk-1); Ypf(kk-1); Apf(kk-1)];
+        X(kk-1) = POS(1);
+        Y(kk-1) = POS(2);
+        A(kk-1) = POS(3);
+
         % Next time use the next scan
         scan_idx = mod(scan_idx, max(size(LD_HEAD))) + 1;
     end;
