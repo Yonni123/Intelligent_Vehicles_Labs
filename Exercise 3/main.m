@@ -63,10 +63,6 @@ X(1) = CONTROL(1,4);
 Y(1) = CONTROL(1,5);
 A(1) = CONTROL(1,6);
 P(1,1:9) = [1 0 0 0 1 0 0 0 (1*pi/180)^2];
-sigma_x = 2;
-sigma_y = 2;
-sigma_theta = 1*pi/180;
-Error_pf = [sigma_x^2 0 0; 0 sigma_y^2 0; 0 0 sigma_theta^2];
 
 syms symv syma symT symx symy theta symL
 X_k = [symx + symv*cos(syma)*symT*cos(theta+(symv*sin(syma)*symT)/(2*symL));
@@ -132,16 +128,25 @@ for kk = 2:no_inputs,
         %plot_uncertainty([X(kk-1) Y(kk-1)]', C, 1, 2);
 
         % Task 5a Kalman Filter with simulated position fixes (small) (Exercise 4)
+        %sigma_x = 10;
+        %sigma_y = 10;
+        %sigma_theta = 1*pi/180;
+        
         % Task 5b Kalman Filter with simulated position fixes (large) (Exercise 4)
+        %sigma_x = 100;
+        %sigma_y = 100;
+        %sigma_theta = 3*pi/180;
+
         %Xpf(kk-1) = CONTROL(kk-1,4) + randn(size(CONTROL(kk-1,4)))*sqrt(sigma_x);
         %Ypf(kk-1) = CONTROL(kk-1,5) + randn(size(CONTROL(kk-1,5)))*sqrt(sigma_y);
         %Apf(kk-1) = CONTROL(kk-1,6) + randn(size(CONTROL(kk-1,6)))*sqrt(sigma_theta);
-        
+        %Error_pf = [sigma_x^2 0 0; 0 sigma_y^2 0; 0 0 sigma_theta^2];
+
         % Task 6 Kalmanfilterr with Cox position update (Exercise 4)
         Xpf(kk-1) = X(kk-1) + dx;
         Ypf(kk-1) = Y(kk-1) + dy;
         Apf(kk-1) = A(kk-1) + da;
-        P(kk-1,1:9) = reshape(C,[1,9]); % Set current Position unsertainty
+        Error_pf = C;
 
         Error_x = [P(kk-1,1:3);P(kk-1,4:6);P(kk-1,7:9)];
         P(kk-1,1:9) = reshape((Error_pf^(-1) + Error_x^(-1))^(-1),[1,9]);
