@@ -151,9 +151,14 @@ for kk = 2:no_inputs,
         Error_x = [P(kk-1,1:3);P(kk-1,4:6);P(kk-1,7:9)];
         P(kk-1,1:9) = reshape((Error_pf^(-1) + Error_x^(-1))^(-1),[1,9]);
         POS = Error_pf*(Error_pf+Error_x)^(-1)*[X(kk-1); Y(kk-1); A(kk-1)] + Error_x*(Error_pf + Error_x)^(-1)*[Xpf(kk-1); Ypf(kk-1); Apf(kk-1)];
-        X(kk-1) = POS(1);
-        Y(kk-1) = POS(2);
-        A(kk-1) = POS(3);
+        
+        %X(kk-1) = POS(1);
+        %Y(kk-1) = POS(2);
+        %A(kk-1) = POS(3);
+
+        X(kk-1) = Xpf(kk-1);
+        Y(kk-1) = Ypf(kk-1);
+        A(kk-1) = Apf(kk-1);
 
         % Next time use the next scan
         scan_idx = mod(scan_idx, max(size(LD_HEAD))) + 1;
@@ -218,7 +223,8 @@ plot(sqrt(P(:,5)),'r'); % one sigma
 title('Error Y [mm] and uncertainty [std] (red)');
 
 subplot(3,1,3);
-plot(ERROR(:,3)*180/pi,'b'); hold;
+angle = ERROR(:,3)*180/pi;
+plot(mod(angle, 360),'b'); hold;
 plot(sqrt(P(:,9))*180/pi,'r'); % one sigma
 title('Error A [degree] and uncertainty [std] (red)');
 

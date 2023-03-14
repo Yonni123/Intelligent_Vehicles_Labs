@@ -66,7 +66,7 @@ function [ddx,ddy,dda,C] = Cox_LineFit(ANG, DIS, POSE, LINEMODEL, SensorPose, II
             end
 
             % 2.2) Prune outliers
-            threshold = 30;    % Threshold distance at which a data point is considered an outlier
+            threshold = 100;    % Threshold distance at which a data point is considered an outlier
             [WorldCoord, TargetLine, MinDist] = prune_outliers(WorldCoord, TargetLine, MinDist, threshold);
             % plot_points_and_lineModel(WorldCoord, LINEMODEL, 10);
         
